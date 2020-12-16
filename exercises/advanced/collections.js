@@ -7,10 +7,36 @@
  *      - i.e. the second line in the new file should be the first line of `filePaths[1]`
  *    4. Writes the new file to the file located at `writePath`
  */
-
+var fs = require('fs');
+var Promise = require('bluebird');
+var readdirAsync = Promise.promisify(fs.readdir);
+var readFileAsync = Promise.promisify(fs.readFile);
+var writeFileAsync = Promise.promisify(fs.writeFile);
 
 var combineFirstLineOfManyFiles = function(filePaths, writePath) {
- // TODO
+  // TODO
+  let promises = filePaths.map((file) => {
+    return readFileAsync(file).then((data) => {
+      return data.toString().split('\n')[0];
+    });
+  });
+
+  return Promise.all(promises).then((lines) => {
+    let buff = Buffer.alloc(0);
+    let count = 1;
+    lines.forEach((line) => {
+      if (count < lines.length) {
+        line+='\n';
+        count++;
+      }
+      buff = Buffer.concat([buff, Buffer.from(line)]);
+    });
+    return buff;
+
+  }).then((buffer) => {
+    return writeFileAsync(writePath, buffer);
+  });
+
 };
 
 // Export these functions so we can unit test them
